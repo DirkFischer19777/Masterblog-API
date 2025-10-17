@@ -10,9 +10,6 @@ POSTS = [
 ]
 
 
-@app.route('/api/posts', methods=['GET'])
-def get_posts():
-    return jsonify(POSTS)
 
 # POST: Add a new post
 @app.route('/api/posts', methods=['POST'])
@@ -101,6 +98,32 @@ def search_posts():
     # Return list of matching posts (can be empty)
     return jsonify(results), 200
 
+# Get: Sort Post
+@app.route('/api/posts', methods=['GET'])
+def get_posts():
+    # Get optional sorting parameters
+    sort_field = request.args.get('sort')
+    direction = request.args.get('direction', 'asc')
+
+    # Make a copy so we don't change the original POSTS list
+    sorted_posts = POSTS.copy()
+
+    # Check if sorting parameters are given
+    if sort_field:
+        # Validate the sort field
+        if sort_field not in ['title', 'content']:
+            return jsonify({"error": "Invalid sort field. Use 'title' or 'content'."}), 400
+
+        # Validate the sort direction
+        if direction not in ['asc', 'desc']:
+            return jsonify({"error": "Invalid direction. Use 'asc' or 'desc'."}), 400
+
+        # Sort the posts
+        reverse_sort = direction == 'desc'
+        sorted_posts.sort(key=lambda p: p[sort_field].lower(), reverse=reverse_sort)
+
+    # Return the (possibly sorted) list of posts
+    return jsonify(sorted_posts), 200
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
